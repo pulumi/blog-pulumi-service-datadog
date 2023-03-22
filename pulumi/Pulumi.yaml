@@ -1,0 +1,3 @@
+name: blog-pulumi-service-datadog
+runtime: nodejs
+description: Infra to scrape metrics from the Pulumi Service and place them into a Datadog dashboard.
