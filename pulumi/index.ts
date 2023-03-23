@@ -1,7 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
-const pulumiOrg = new pulumi.Config().get("pulumiOrg") || pulumi.getStack().split('/')[0];
+const pulumiOrg = new pulumi.Config().get("pulumiOrg") || pulumi.getOrganization();
+
 const accessToken = new pulumi.Config().getSecret("pulumiAccessToken") || process.env.PULUMI_ACCESS_TOKEN;
 
 const datadogApiKey = process.env.DD_API_KEY;
@@ -79,7 +80,7 @@ new aws.iam.RolePolicyAttachment("lambda-secrets-attachment", {
 
 const lambdaFunc = new aws.lambda.Function(lambdaName, {
   code: new pulumi.asset.FileArchive("../lambda"),
-  runtime: aws.lambda.NodeJS12dXRuntime,
+  runtime: aws.lambda.Runtime.NodeJS18dX,
   role: role.arn,
   handler: "index.handler",
   environment: {

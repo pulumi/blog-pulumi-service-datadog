@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { client, v2 } from '@datadog/datadog-api-client';
-import * as aws from 'aws-sdk';
+import * as secretsManager from '@aws-sdk/client-secrets-manager';
 
 const handler = async (event) => {
   const pulumiAccessToken = await getSecret('pulumi-access-token');
@@ -35,8 +35,10 @@ async function getPulumiMetrics(organization, pulumiToken) {
 
 async function sendMetricsToDatadog(metrics, ddApiKey, ddAppKey) {
   const configuration = client.createConfiguration({
-    apiKey: ddApiKey,
-    appKey: ddAppKey,
+    authMethods: {
+      apiKeyAuth: ddApiKey,
+      appKeyAuth: ddAppKey
+    }
   });
   const metricsApi = new v2.MetricsApi(configuration);
     
@@ -56,8 +58,14 @@ async function sendMetricsToDatadog(metrics, ddApiKey, ddAppKey) {
 }
 
 async function getSecret(secretName) {
-  const client = new aws.SecretsManager();
-  const response = await client.getSecretValue({ SecretId: secretName }).promise();
+  const client = new secretsManager.SecretsManagerClient();
+  const command = new secretsManager.GetSecretValueCommand({ SecretId: `scrape-pulumi-service-metrics/${secretName}`});
+  const response = await client.send(command);
+
+  if (!response.SecretString) {
+    throw(new Error(`Secret ${secretName} not found`));
+  }
+
   return response.SecretString;
 }
 
